@@ -58,8 +58,8 @@ int main() {
 	update_prim(dom1);
 	
 	// Main loop - iterate until maximum time is reached
-	int count=1;
-	while (time<tmax and count<1500) {		
+	int count=0;
+	while (time<tmax and count<ntmax) {		
 		// Output at tprint intervals
 		if (time>=tprint) {
 			cout<<setw(3)<<count<<") t="<<time<<", tmax="<<tmax<<", dt="<<dt<<", itprint="<<itprint<<endl;
@@ -67,6 +67,23 @@ int main() {
 			tprint+=dtprint;
 			itprint+=1;
 		}
+
+		// Calculate Riemann invariants ($u \pm 2*a/(\gamma-1)$ here only valid for hydro + isentropic)
+                if (!MAG_FIELD_ENABLED) {
+        	        dom1.numt=count+1;
+                	dom1.tsave[count]=time;
+        	        for (int nb=0; nb<dom1.lastActive; nb++) {
+	                        if (dom1.ActiveBlocks[nb]!=-1) {
+                	                for (int i=0; i<nx+2; i++) {
+        	                                real a=sqrt(Gamma*dom1.prim[2][i][nb]/dom1.prim[0][i][nb]);
+	                                        dom1.Jplus[i][nb][count]=dom1.prim[1][i][nb]+2*a/(Gamma-1.);
+                                        	dom1.Jminus[i][nb][count]=dom1.prim[1][i][nb]-2*a/(Gamma-1.);
+						dom1.s[i][nb][count]=log(dom1.prim[2][i][nb]/pow(dom1.prim[0][i][nb],Gamma));
+                                	}
+                        	}
+                	}
+		}
+
 		// Obtain the $\delta t$ allowed by the CFL criterium
 		dt=timestep(dom1);
 

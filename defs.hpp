@@ -3,11 +3,12 @@ using real=float;
 using namespace std;
 
 // Global variables
-const bool MAG_FIELD_ENABLED=true;
-const int nvar=6; 
+const bool MAG_FIELD_ENABLED=false;
+const int nvar=4; 
 const int nx=5;
 const int nlevs=7;
 const int nbmax=64;
+const int ntmax=1500; // Number of timesteps to be saved for plotting Riemann invariants
 
 const real xmax=1.;
 const real Gamma=2.0;
@@ -23,23 +24,10 @@ class meshblock {
 		int minID[nlevs], maxID[nlevs], ActiveBlocks[nbmax];
 		int lastActive=1; 
 		bool FlagRefine[nbmax], FlagCoarse[nbmax];
+		// Include Riemann invariants for contour plot
+		int numt;
+		real tsave[ntmax];
+		real Jplus[nx+2][nbmax][ntmax], Jminus[nx+2][nbmax][ntmax];
+		real s[nx+2][nbmax][ntmax]; // Entropy
 };
 
-// Try binary tree
-class AMRmesh {
-	public:
-		int nb;
-		real u[nvar][nx+2][nbmax];
-		real prim[nvar][nx+2][nbmax];
-		real dx[nlevs];
-		int minID[nlevs], maxID[nlevs], ActiveBlocks[nbmax];
-		int lastActive=1;
-		bool FlagRefine[nbmax], FlagCoarse[nbmax];
-		AMRmesh* left;
-		AMRmesh* right;
-		AMRmesh(int val) {
-			nb=val;
-			left=nullptr;
-			right=nullptr;
-		}
-};

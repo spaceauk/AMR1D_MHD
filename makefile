@@ -7,7 +7,7 @@ CPPFLAGS=$(ARG)
 CPPFLAGS +=  
 
 CPP = 
-CFLAGS = -std=c++17 -Wall
+CFLAGS = -O3 -std=c++17 -Wall -Wextra -march=native -funroll-loops
 
 OBJ = main.o mesh.o misc.o initconds.o timestep.o setbcs.o fluxSolver.o flags.o output.o  
 EXEC = main.x

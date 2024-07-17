@@ -73,6 +73,29 @@ void plotdata(meshblock &dom,const int itprint) {
 	}
 	Wdata.close();
 
+	// Save data for Riemann invariant to be plotted
+	if (!MAG_FIELD_ENABLED) {
+		fname="data/char_curves.dat";
+		Wdata.open(fname);
+		for (int nt=0; nt<dom.numt; nt++) {
+			for (int nb=0; nb<dom.lastActive; nb++) {
+				if (dom.ActiveBlocks[nb]!=-1) {
+				level=getlevel(dom,nb);
+				xb=getBlockPosition(dom,nb);
+				for (int i=1; i<=nx; i++) {
+					x=xb+(i-0.5)*dom.dx[level];
+					Wdata<<setw(width)<<dom.tsave[nt]
+					<<setw(width)<<x
+   					<<setw(width)<<dom.Jplus[i][nb][nt]
+					<<setw(width)<<dom.Jminus[i][nb][nt]
+					<<setw(width)<<dom.s[i][nb][nt]<<endl;					
+				}
+			}
+			}
+		}
+	}
+	Wdata.close();
+
 	// Construct the command to plot data
 	string command="python3 plotdata.py ";
 	cout<<command<<endl;
