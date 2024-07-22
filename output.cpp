@@ -1,14 +1,13 @@
-#include<iostream>
 #include<fstream>
 #include<sstream>
 #include<iomanip>   // setw()
 #include "defs.hpp"
 
-int getlevel(meshblock &dom,const int nb);
-real getBlockPosition(meshblock &dom,const int nb);
+int getlevel(meshblock* dom,const int nb);
+real getBlockPosition(meshblock* dom,const int nb);
 
 // Output to file
-void output(meshblock &dom,string ictype,const int itprint) {
+void output(meshblock* dom,string ictype,const int itprint) {
 	int level;
 	real xb;
 
@@ -22,20 +21,20 @@ void output(meshblock &dom,string ictype,const int itprint) {
 	int width=20;
 	Wdata.open(fname);
 	// Write x and rho, u & P
-	for (int nb=0;nb<dom.lastActive;nb++) {
-		if (dom.ActiveBlocks[nb]!=-1) {
+	for (int nb=0;nb<dom->lastActive;nb++) {
+		if (dom->ActiveBlocks[nb]!=-1) {
 			level=getlevel(dom,nb);
 			xb=getBlockPosition(dom,nb);	
 			for (int i=1;i<=nx;i++) {
-				real x=xb+(i-0.5)*dom.dx[level];
+				real x=xb+(i-0.5)*dom->dx[level];
 				Wdata<<setw(width)<<x<<setw(width)
-				<<dom.prim[0][i][nb]<<setw(width)
-				<<dom.prim[1][i][nb]<<setw(width)
-				<<dom.prim[3][i][nb];
+				<<dom->prim[0][i][nb]<<setw(width)
+				<<dom->prim[1][i][nb]<<setw(width)
+				<<dom->prim[3][i][nb];
 				if (nvar>4) {
-					Wdata<<setw(width)<<dom.prim[2][i][nb]<<
-					setw(width)<<dom.prim[4][i][nb]<<
-					setw(width)<<dom.prim[5][i][nb];	
+					Wdata<<setw(width)<<dom->prim[2][i][nb]<<
+					setw(width)<<dom->prim[4][i][nb]<<
+					setw(width)<<dom->prim[5][i][nb];	
 				}
 				Wdata<<endl;
 			}
@@ -44,7 +43,7 @@ void output(meshblock &dom,string ictype,const int itprint) {
 	Wdata.close();
 }
 
-void plotdata(meshblock &dom,const int itprint) {
+void plotdata(RiemannInv* dom,const int itprint) {
 	real xb,x;
 	int level;
 	stringstream ss;
@@ -52,20 +51,20 @@ void plotdata(meshblock &dom,const int itprint) {
 	ofstream Wdata;
 	int width=20;
 	Wdata.open(fname);
-	for (int nb=0;nb<dom.lastActive;nb++) {
-		if (dom.ActiveBlocks[nb]!=-1) {
+	for (int nb=0;nb<dom->lastActive;nb++) {
+		if (dom->ActiveBlocks[nb]!=-1) {
 			level=getlevel(dom,nb);
 			xb=getBlockPosition(dom,nb);
 			for (int i=1;i<=nx;i++) {
-				x=xb+(i-0.5)*dom.dx[level];
+				x=xb+(i-0.5)*dom->dx[level];
 				Wdata<<setw(width)<<x<<setw(width)
-                	                <<dom.prim[0][i][nb]<<setw(width)
-                        	        <<dom.prim[1][i][nb]<<setw(width)
-                                	<<dom.prim[3][i][nb];
+                	                <<dom->prim[0][i][nb]<<setw(width)
+                        	        <<dom->prim[1][i][nb]<<setw(width)
+                                	<<dom->prim[3][i][nb];
 				if (nvar>4) {
-                                        Wdata<<setw(width)<<dom.prim[2][i][nb]<<
-					setw(width)<<dom.prim[4][i][nb]<<
-                                        setw(width)<<dom.prim[5][i][nb];
+                                        Wdata<<setw(width)<<dom->prim[2][i][nb]<<
+					setw(width)<<dom->prim[4][i][nb]<<
+                                        setw(width)<<dom->prim[5][i][nb];
                                 }
                                 Wdata<<endl;
 			}
@@ -77,18 +76,18 @@ void plotdata(meshblock &dom,const int itprint) {
 	if (!MAG_FIELD_ENABLED) {
 		fname="data/char_curves.dat";
 		Wdata.open(fname);
-		for (int nt=0; nt<dom.numt; nt++) {
-			for (int nb=0; nb<dom.lastActive; nb++) {
-				if (dom.ActiveBlocks[nb]!=-1) {
+		for (int nt=0; nt<dom->numt; nt++) {
+			for (int nb=0; nb<dom->lastActive; nb++) {
+				if (dom->ActiveBlocks[nb]!=-1) {
 				level=getlevel(dom,nb);
 				xb=getBlockPosition(dom,nb);
 				for (int i=1; i<=nx; i++) {
-					x=xb+(i-0.5)*dom.dx[level];
-					Wdata<<setw(width)<<dom.tsave[nt]
+					x=xb+(i-0.5)*dom->dx[level];
+					Wdata<<setw(width)<<dom->tsave[nt]
 					<<setw(width)<<x
-   					<<setw(width)<<dom.Jplus[i][nb][nt]
-					<<setw(width)<<dom.Jminus[i][nb][nt]
-					<<setw(width)<<dom.s[i][nb][nt]<<endl;					
+   					<<setw(width)<<dom->Jplus[i][nb][nt]
+					<<setw(width)<<dom->Jminus[i][nb][nt]
+					<<setw(width)<<dom->s[i][nb][nt]<<endl;					
 				}
 			}
 			}

@@ -1,4 +1,3 @@
-#include<math.h>
 #include<iostream>
 #include<exception>
 #include "defs.hpp"
@@ -6,15 +5,15 @@
 real u2prim(const real Gamma,const int i,const real uu[nvar]);
 
 // Computes the primitives as a function of the Us in all ActiveBlocks
-void update_prim(meshblock &dom) {
-	for (int nb=0; nb<dom.lastActive; nb++) {
-		if (dom.ActiveBlocks[nb]!=-1) {
+void update_prim(meshblock* dom) {
+	for (int nb=0; nb<dom->lastActive; nb++) {
+		if (dom->ActiveBlocks[nb]!=-1) {
 			for (int i=0; i<=nx+1; i++) {
 				real uu[nvar],pp;
-				for (int ii=0; ii<nvar; ii++) {uu[ii]=dom.u[ii][i][nb];}
+				for (int ii=0; ii<nvar; ii++) {uu[ii]=dom->u[ii][i][nb];}
 				for (int ii=0; ii<nvar; ii++) {
 					pp=u2prim(Gamma,ii,uu);
-					dom.prim[ii][i][nb]=pp;					
+					dom->prim[ii][i][nb]=pp;					
 				}
 			}
 		}

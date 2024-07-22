@@ -1,28 +1,28 @@
-#include<math.h>
-#include<iostream>
 #include<exception>
 #include "defs.hpp"
 
 void prim2hllc_hydro(real gamma,real (&primL)[nvar],real (&primR)[nvar],real (&ff)[nvar]);
+void prim2hll_hydro(real gamma,real (&primL)[nvar],real (&primR)[nvar],real (&ff)[nvar]);
 void prim2RUSA_mhd(real gamma,real (&primL)[nvar],real (&primR)[nvar],real (&ff)[nvar]);
 real prim2u(const real Gamma,const int i,const real* pp);
 void eulerfluxes(real gamma,real (&pp)[nvar],real (&ff)[nvar]);
 
 // Computes the fluxes 
-void fluxSolver(meshblock &dom,real (&f)[nvar][nx+2][nbmax]) {
+void fluxSolver(meshblock* dom,real (&f)[nvar][nx+2][nbmax]) {
 	real primL[nvar], primR[nvar], ff[nvar];
 
-	for (int nb=0;nb<dom.lastActive;nb++) {
-		if (dom.ActiveBlocks[nb]!=-1) {
+	for (int nb=0;nb<dom->lastActive;nb++) {
+		if (dom->ActiveBlocks[nb]!=-1) {
 			for (int i=0;i<=nx;i++) {
 				// Cell edge values (left vs right) - Godunov method (1st order)
 				for (int ii=0;ii<nvar;ii++) {
-					primL[ii]=dom.prim[ii][i][nb];
-					primR[ii]=dom.prim[ii][i+1][nb];
+					primL[ii]=dom->prim[ii][i][nb];
+					primR[ii]=dom->prim[ii][i+1][nb];
 				}
 				// Calculate flux with left and right cell edge values
 				if (nvar==4) {
 					prim2hllc_hydro(Gamma,primL,primR,ff); 
+					//prim2hll_hydro(Gamma,primL,primR,ff);
 				} else {					
 					prim2RUSA_mhd(Gamma,primL,primR,ff);
 				}
@@ -33,6 +33,34 @@ void fluxSolver(meshblock &dom,real (&f)[nvar][nx+2][nbmax]) {
 		}
 	}
 }
+
+// Hydro---------------------------------------------------------------------------------
+// Obtain the HLL fluxes
+void prim2hll_hydro(real gamma,real (&primL)[nvar],real (&primR)[nvar],real (&ff)[nvar]) {
+	real sl,sr,csl,csr,sst,ek;
+	real fl[nvar],fr[nvar],ust[nvar];
+
+	csl=sqrt(gamma*primL[3]/primL[0]);
+	csr=sqrt(gamma*primR[3]/primR[0]);
+
+	sl=min(primL[1]-csl,primR[1]-csr);
+	sr=max(primL[1]+csl,primR[1]+csr);
+
+	if (sl>0.) {
+		eulerfluxes(gamma,primL,ff);
+	} else if (sr<0.) {
+		eulerfluxes(gamma,primR,ff);
+	} else if (sst>=0.) {
+		eulerfluxes(gamma,primL,fl);
+		eulerfluxes(gamma,primR,fr);
+		for (int ii=0;ii<4;ii++) {
+			real uL=prim2u(gamma,ii,primL);	
+			real uR=prim2u(gamma,ii,primR);
+			ff[ii]=(sr*fl[ii]-sl*fr[ii]+sl*sr*(uR-uL))/(sr-sl);
+		}
+	} 
+}
+
 
 // Obtain the HLLC fluxes
 void prim2hllc_hydro(real gamma,real (&primL)[nvar],real (&primR)[nvar],real (&ff)[nvar]) {
@@ -92,6 +120,7 @@ void prim2hllc_hydro(real gamma,real (&primL)[nvar],real (&primR)[nvar],real (&f
 void eulerfluxes(real gamma,real (&pp)[nvar],real (&ff)[nvar]) {
 	ff[0]=pp[0]*pp[1];	
 	ff[1]=pp[0]*pow(pp[1],2)+pp[3];
+	ff[2]=pp[0]*pp[1]*pp[2];
 	ff[3]=pp[1]*(0.5*pp[0]*pow(pp[1],2)+gamma*pp[3]/(gamma-1.));
 	if (nvar>4) {
 		ff[1]+=0.5*(pow(pp[4],2)+pow(pp[5],2))-pow(pp[4],2);

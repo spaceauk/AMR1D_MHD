@@ -1,13 +1,12 @@
-#include<iostream>
 #include "defs.hpp"
-int getLeft(meshblock &dom, const int nb);
-int getRight(meshblock &dom, const int nb);
+int getLeft(meshblock* dom, const int nb);
+int getRight(meshblock* dom, const int nb);
 
-void setbcs(meshblock &dom,real (&u)[nvar][nx+2][nbmax]) {
+void setbcs(meshblock* dom,real (&u)[nvar][nx+2][nbmax]) {
 	int nbL,nbR;
 
-	for (int nb=0;nb<dom.lastActive;nb++) {
-		if (dom.ActiveBlocks[nb]!=-1) {
+	for (int nb=0;nb<dom->lastActive;nb++) {
+		if (dom->ActiveBlocks[nb]!=-1) {
 			// Open boundary conditions
 			// Left
 			nbL=getLeft(dom,nb);
