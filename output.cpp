@@ -25,8 +25,8 @@ void output(meshblock* dom,string ictype,const int itprint) {
 		if (dom->ActiveBlocks[nb]!=-1) {
 			level=getlevel(dom,nb);
 			xb=getBlockPosition(dom,nb);	
-			for (int i=1;i<=nx;i++) {
-				real x=xb+(i-0.5)*dom->dx[level];
+			for (int i=dom->nxmin;i<=dom->nxmax;i++) {
+				real x=xb+(i-(0.5+nghosts/2))*dom->dx[level];
 				Wdata<<setw(width)<<x<<setw(width)
 				<<dom->prim[0][i][nb]<<setw(width)
 				<<dom->prim[1][i][nb]<<setw(width)
@@ -55,8 +55,8 @@ void plotdata(RiemannInv* dom,const int itprint) {
 		if (dom->ActiveBlocks[nb]!=-1) {
 			level=getlevel(dom,nb);
 			xb=getBlockPosition(dom,nb);
-			for (int i=1;i<=nx;i++) {
-				x=xb+(i-0.5)*dom->dx[level];
+			for (int i=dom->nxmin;i<=dom->nxmax;i++) {
+				x=xb+(i-(0.5+nghosts/2))*dom->dx[level];
 				Wdata<<setw(width)<<x<<setw(width)
                 	                <<dom->prim[0][i][nb]<<setw(width)
                         	        <<dom->prim[1][i][nb]<<setw(width)
@@ -81,8 +81,8 @@ void plotdata(RiemannInv* dom,const int itprint) {
 				if (dom->ActiveBlocks[nb]!=-1) {
 				level=getlevel(dom,nb);
 				xb=getBlockPosition(dom,nb);
-				for (int i=1; i<=nx; i++) {
-					x=xb+(i-0.5)*dom->dx[level];
+				for (int i=dom->nxmin; i<=dom->nxmax; i++) {
+					x=xb+(i-(0.5+nghosts/2))*dom->dx[level];
 					Wdata<<setw(width)<<dom->tsave[nt]
 					<<setw(width)<<x
    					<<setw(width)<<dom->Jplus[i][nb][nt]

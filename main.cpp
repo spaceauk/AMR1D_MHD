@@ -61,7 +61,7 @@ int main() {
 	real tmpprim[nvar];
 	for (int nb=0; nb<dom1->lastActive; nb++) {
                 if (dom1->ActiveBlocks[nb]!=-1) {
-                        for (int i=0; i<=nx+1; i++) {
+                        for (int i=0; i<=dom1->ntot; i++) {
 				for (int k=0; k<nvar; k++) {tmpprim[k]=dom1->prim[k][i][nb];}
 				for (int k=0; k<nvar; k++) {dom1->u[k][i][nb]=prim2u(Gamma,k,tmpprim);}
 			}
@@ -80,19 +80,20 @@ int main() {
 		}
 
 		// Calculate Riemann invariants ($u \pm 2*a/(\gamma-1)$ here only valid for hydro + isentropic)
-                if (!MAG_FIELD_ENABLED) {
-        	        dom1->numt=count+1;
-                	dom1->tsave[count]=time;
+                if (!MAG_FIELD_ENABLED and count%2==0) {
+			int nt=count/2;			
+        	        dom1->numt=nt+1;
+                	dom1->tsave[nt]=time;
         	        for (int nb=0; nb<dom1->lastActive; nb++) {
 	                        if (dom1->ActiveBlocks[nb]!=-1) {
-                	                for (int i=0; i<nx+2; i++) {
+                	                for (int i=0; i<nx+2*nghosts; i++) {
         	                                real a=sqrt(Gamma*dom1->prim[2][i][nb]/dom1->prim[0][i][nb]);
-						if (dom1->prim[2][i][nb]<0. or dom1->prim[0][i][nb]<0.) {
-							cout<<"Negative pressure or density! P="<<dom1->prim[2][i][nb]
-							    <<", \rho="<<dom1->prim[0][i][nb]<<" @ i="<<i<<", nb="<<nb<<endl;}	
-	                                        dom1->Jplus[i][nb][count]=dom1->prim[1][i][nb]+2*a/(Gamma-1.);
-                                        	dom1->Jminus[i][nb][count]=dom1->prim[1][i][nb]-2*a/(Gamma-1.);
-						dom1->s[i][nb][count]=log(dom1->prim[2][i][nb]/pow(dom1->prim[0][i][nb],Gamma));
+						//if (dom1->prim[2][i][nb]<0. or dom1->prim[0][i][nb]<0.) {
+						//	cout<<"Negative pressure or density! P="<<dom1->prim[2][i][nb]
+						//	    <<", \rho="<<dom1->prim[0][i][nb]<<" @ i="<<i<<", nb="<<nb<<endl;}	
+	                                        dom1->Jplus[i][nb][nt]=dom1->prim[1][i][nb]+2*a/(Gamma-1.);
+                                        	dom1->Jminus[i][nb][nt]=dom1->prim[1][i][nb]-2*a/(Gamma-1.);
+						dom1->s[i][nb][nt]=log(dom1->prim[2][i][nb]/pow(dom1->prim[0][i][nb],Gamma));
                                 	}
                         	}
                 	}
@@ -104,7 +105,7 @@ int main() {
 		// Integrate u from t to t+dt
 		tstep(dom1,dt,time);
 
-		// Updates the primitives
+		// Updates the primitives		
 		update_prim(dom1);
 		
 		// Updates mesh (b4 advancing the solution at every time step, mesh is updated first)

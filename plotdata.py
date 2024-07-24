@@ -15,7 +15,7 @@ print("Number of variables: "+str(num_prim_variables))
 
 # Define markers for different prim variables
 if num_prim_variables==3:
-    markers = ['x', '+', '.']
+    markers = ['.', '.', '.']
     ylabel=['Density','Velocity','Pressure']
     vert_size=4
 else:

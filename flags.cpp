@@ -12,7 +12,7 @@ void FlagGrads(meshblock* dom) {
 		if (dom->ActiveBlocks[nb]!=-1) {
 			maxgrad=0.;
 			level=getlevel(dom,nb);
-			for (int i=1;i<=nx;i++) {
+			for (int i=dom->nxmin;i<=dom->nxmax;i++) {
 				gradrho=(dom->prim[0][i+1][nb]-dom->prim[0][i-1][nb])/(dom->prim[0][i][nb]*2.*dom->dx[level]);
 				gradP=(dom->prim[3][i+1][nb]-dom->prim[3][i-1][nb])/(dom->prim[3][i][nb]*2.*dom->dx[level]);
 

@@ -2,7 +2,7 @@
 #include<iomanip>
 #include "defs.hpp"
 
-real u2prim(const real Gamma,const int i,const real uu[nvar]);
+real u2prim(const real Gamma,const int i,const real uu[nvar],string loc);
 void FlagGrads(meshblock* dom);
 void FlagProx(meshblock* dom);
 
@@ -171,27 +171,27 @@ void refineBlock(meshblock* dom, const int dadNb) {
 	// |      (b)<-|->(a)      |
 	// (a) Second son (son2) - ascending order (->)
 	real intmArray[nvar];
-	for (int i=0;i<nvar;i++) {intmArray[i]=0.;}
-	for (int i=0;i<=nx+1;i++) {
+	for (int k=0;k<nvar;k++) {intmArray[k]=0.;}
+	for (int i=0;i<=dom->ntot;i++) {
 		real pp;
 		for (int ii=0;ii<nvar;ii++) {
-			dom->u[ii][i][son2nb]=dom->u[ii][(i+1+nx)/2][dadNb];
+			dom->u[ii][i][son2nb]=dom->u[ii][(i+nghosts+nx)/2][dadNb];
 			intmArray[ii]=dom->u[ii][i][son2nb];
 		}
 		for (int ii=0;ii<nvar;ii++) {
-			pp=u2prim(Gamma,ii,intmArray);
+			pp=u2prim(Gamma,ii,intmArray,"refine");
 			dom->prim[ii][i][son2nb]=pp;
 		}
 	}
 	// (b) First son (son1) - descending order (<-)
-	for (int i=nx+1;i>=0;i--){
+	for (int i=dom->ntot;i>=0;i--){
 		real pp;
 		for (int ii=0;ii<nvar;ii++) {
-			dom->u[ii][i][son1nb]=dom->u[ii][(i+1)/2][dadNb];
+			dom->u[ii][i][son1nb]=dom->u[ii][(i+nghosts)/2][dadNb];
 			intmArray[ii]=dom->u[ii][i][son1nb];
 		}
 		for (int ii=0;ii<nvar;ii++) {
-			pp=u2prim(Gamma,ii,intmArray);
+			pp=u2prim(Gamma,ii,intmArray,"refine");
 			dom->prim[ii][i][son1nb]=pp;
 		}
 	}
@@ -221,38 +221,30 @@ void coarseBlock(meshblock* dom, int son1nb) {
 	//     The ghost cell does not need to be modified.
 	real intmArray[nvar];
 	for (int i=0;i<nvar;i++) {intmArray[i]=0.;}
-	for (int i=1;i<=nx/2;i++) {
+	for (int i=nghosts/2;i<=dom->nx2;i++) {
 		real pp;
 		for (int ii=0;ii<nvar;ii++) {
-			dom->u[ii][i][dadNb]=0.5*(dom->u[ii][2*i-1][son1nb]+dom->u[ii][2*i][son1nb]);
+			int i2= nghosts==1? 2*i-1 : 2*(i-nghosts/2);
+			dom->u[ii][i][dadNb]=0.5*(dom->u[ii][i2][son1nb]+dom->u[ii][i2+1][son1nb]);
 			intmArray[ii]=dom->u[ii][i][dadNb];
 		}
 		for (int ii=0;ii<nvar;ii++) {
-			pp=u2prim(Gamma,ii,intmArray);
+			pp=u2prim(Gamma,ii,intmArray,"coarsen");
 			dom->prim[ii][i][dadNb]=pp;
 		}
 	}
 	// (b) 2nd half
-	for (int i=1;i<=nx/2;i++) {
+	for (int i=nghosts/2;i<=dom->nx2;i++) {
 		real pp;
 		for (int ii=0;ii<nvar;ii++) {
-			dom->u[ii][i+nx/2][dadNb]=0.5*(dom->u[ii][2*i-1][son2nb]+dom->u[ii][2*i][son2nb]);
-			intmArray[ii]=dom->u[ii][i+nx/2][dadNb];
+			int i2= nghosts==1? 2*i-1 : 2*i;
+			dom->u[ii][i+dom->nx2][dadNb]=0.5*(dom->u[ii][i2][son2nb]+dom->u[ii][i2+1][son2nb]);
+			intmArray[ii]=dom->u[ii][i+dom->nx2][dadNb];
 		} 
 		for (int ii=0;ii<nvar;ii++) {
-			pp=u2prim(Gamma,ii,intmArray);
-			dom->prim[ii][i+nx/2][dadNb]=pp;
+			pp=u2prim(Gamma,ii,intmArray,"coarsen");
+			dom->prim[ii][i+dom->nx2][dadNb]=pp;
 		}
-	}
-	// (c) Ghost cell at the right
-	real pp;
-	for (int ii=0;ii<nvar;ii++) {
-		dom->u[ii][nx+1][dadNb]=dom->u[ii][nx+1][son2nb];
-		intmArray[ii]=dom->u[ii][nx+1][dadNb];
-	}
-	for (int ii=0;ii<nvar;ii++) {
-		pp=u2prim(Gamma,ii,intmArray);
-		dom->prim[ii][nx+1][dadNb]=pp;
 	}
 
 	// Update ActiveBlocks
@@ -276,11 +268,13 @@ void update_mesh(meshblock* dom) {
 	for (int i=0;i<dom->lastActive;i++) {
 		if (dom->ActiveBlocks[i]!=-1) {
 			if (dom->FlagCoarse[i]) {
-				cout<<setw(17)<<"Coarsening: bID="<<setw(width)<<dom->ActiveBlocks[i]<<", nb="<<setw(width)<<i<<", lastActive="<<setw(width)<<dom->lastActive<<endl;
+				cout<<setw(17)<<"Coarsening: bID="<<setw(width)<<dom->ActiveBlocks[i]
+					<<", nb="<<setw(width)<<i<<", lastActive="<<setw(width)<<dom->lastActive<<endl;
 				coarseBlock(dom,i);
 			}
 			if (dom->FlagRefine[i]) {
-				cout<<setw(17)<<"Refining: bID="<<setw(width)<<dom->ActiveBlocks[i]<<", nb="<<setw(width)<<i<<", lastActive="<<setw(width)<<dom->lastActive<<endl;
+				cout<<setw(17)<<"Refining: bID="<<setw(width)<<dom->ActiveBlocks[i]
+					<<", nb="<<setw(width)<<i<<", lastActive="<<setw(width)<<dom->lastActive<<endl;
 				refineBlock(dom,i);
 			}
 		}

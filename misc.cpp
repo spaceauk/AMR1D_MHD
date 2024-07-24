@@ -2,17 +2,19 @@
 #include<exception>
 #include "defs.hpp"
 
-real u2prim(const real Gamma,const int i,const real uu[nvar]);
+real u2prim(const real Gamma,const int i,const real uu[nvar],string loc);
 
 // Computes the primitives as a function of the Us in all ActiveBlocks
 void update_prim(meshblock* dom) {
 	for (int nb=0; nb<dom->lastActive; nb++) {
 		if (dom->ActiveBlocks[nb]!=-1) {
-			for (int i=0; i<=nx+1; i++) {
+			for (int i=0; i<=dom->ntot; i++) {
 				real uu[nvar],pp;
-				for (int ii=0; ii<nvar; ii++) {uu[ii]=dom->u[ii][i][nb];}
 				for (int ii=0; ii<nvar; ii++) {
-					pp=u2prim(Gamma,ii,uu);
+					uu[ii]=dom->u[ii][i][nb];
+				}
+				for (int ii=0; ii<nvar; ii++) {
+					pp=u2prim(Gamma,ii,uu,"update prim");
 					dom->prim[ii][i][nb]=pp;					
 				}
 			}
@@ -21,12 +23,12 @@ void update_prim(meshblock* dom) {
 }
 
 // Computes primitives from the conserved vars in a single cell
-real u2prim(const real Gamma,const int i,const real uu[nvar]) {
+real u2prim(const real Gamma,const int i,const real uu[nvar],string loc) {
 	real pp=0;
 	if (i==0) {
 		pp=uu[0];
 		if (pp<0.) {
-			cout<<"Negative density at i="<<i<<" where rho="<<pp<<endl;
+			cout<<loc<<") Negative density at i="<<i<<" where rho="<<pp<<endl;
 			throw exception();
 		}
 	} else if (i==1 or i==2) {
@@ -35,7 +37,7 @@ real u2prim(const real Gamma,const int i,const real uu[nvar]) {
 		pp=(uu[3]-0.5*(pow(uu[1],2)+pow(uu[2],2))/uu[0])*(Gamma-1.);
 		if (nvar>4) pp-=0.5*(pow(uu[4],2)+pow(uu[5],2))*(Gamma-1.);
 		if (pp<0.) {
-			cout<<"Negative pressure at i="<<i<<" where P="<<pp<<endl;
+			cout<<loc<<") Negative pressure at i="<<i<<" where P="<<pp<<endl;
 			throw exception();
 		}
 	} else {

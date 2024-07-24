@@ -1,0 +1,4 @@
+slope limiter doesnt work well with Euler time step unless CFL<=0.5 is used. Is it caused 2nd order spatial but 1st order temporal results in highly oscillatory results unless smaller cfl used?
+
+
+Now I switch to RK2, the slope limiter can run without producing spurious oscillation at CFL=0.9 instead.

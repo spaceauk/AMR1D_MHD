@@ -6,23 +6,40 @@ void prim2hll_hydro(real gamma,real (&primL)[nvar],real (&primR)[nvar],real (&ff
 void prim2RUSA_mhd(real gamma,real (&primL)[nvar],real (&primR)[nvar],real (&ff)[nvar]);
 real prim2u(const real Gamma,const int i,const real* pp);
 void eulerfluxes(real gamma,real (&pp)[nvar],real (&ff)[nvar]);
+real slopelimiter(int limiter,real r,real eta);
 
 // Computes the fluxes 
-void fluxSolver(meshblock* dom,real (&f)[nvar][nx+2][nbmax]) {
+void fluxSolver(meshblock* dom,real (&f)[nvar][nx+2*nghosts][nbmax]) {
 	real primL[nvar], primR[nvar], ff[nvar];
 
 	for (int nb=0;nb<dom->lastActive;nb++) {
 		if (dom->ActiveBlocks[nb]!=-1) {
-			for (int i=0;i<=nx;i++) {
+			for (int i=dom->nxminb;i<=dom->nxmax;i++) {
 				// Cell edge values (left vs right) - Godunov method (1st order)
 				for (int ii=0;ii<nvar;ii++) {
-					primL[ii]=dom->prim[ii][i][nb];
-					primR[ii]=dom->prim[ii][i+1][nb];
+					// High-res TVD slope limiter
+					real dWp2, dWp1, dWm1, r, phi_l=0, phi_r=0;
+					real eta=0.;
+					if (dom->SLtype>0) {
+						dWp2=dom->prim[ii][i+2][nb]-dom->prim[ii][i+1][nb];
+						dWp1=dom->prim[ii][i+1][nb]-dom->prim[ii][i][nb];
+						dWm1=dom->prim[ii][i][nb]-dom->prim[ii][i-1][nb];
+						r=dWm1/(dWp1+eps);
+						phi_l=slopelimiter(dom->SLtype,r,eta);
+						r=dWp1/(dWp2+eps);
+						phi_r=slopelimiter(dom->SLtype,1./r,eta);
+					}
+					// Compute cell edges (from Eq. 3.5 of Cada)					
+					primL[ii]=dom->prim[ii][i][nb]+0.5*phi_l*dWp1;
+					primR[ii]=dom->prim[ii][i+1][nb]-0.5*phi_r*dWp1;
 				}
 				// Calculate flux with left and right cell edge values
 				if (nvar==4) {
-					prim2hllc_hydro(Gamma,primL,primR,ff); 
-					//prim2hll_hydro(Gamma,primL,primR,ff);
+					if (dom->RStype==0) {
+						prim2hll_hydro(Gamma,primL,primR,ff);
+					} else if (dom->RStype==1) {
+						prim2hllc_hydro(Gamma,primL,primR,ff); 
+					}
 				} else {					
 					prim2RUSA_mhd(Gamma,primL,primR,ff);
 				}

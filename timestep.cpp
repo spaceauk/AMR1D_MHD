@@ -2,8 +2,9 @@
 #include "defs.hpp"
 
 int getlevel(meshblock* dom,int nb);
-void setbcs(meshblock* dom,real (&u)[nvar][nx+2][nbmax]);
-void fluxSolver(meshblock* dom,real (&f)[nvar][nx+2][nbmax]);
+void setbcs(meshblock* dom,real (&u)[nvar][nx+2*nghosts][nbmax]);
+void fluxSolver(meshblock* dom,real (&f)[nvar][nx+2*nghosts][nbmax]);
+void update_prim(meshblock* dom);
 
 // Compute the timestep allowed by the CFL
 real timestep(meshblock* dom) {
@@ -17,7 +18,7 @@ real timestep(meshblock* dom) {
 	for (int nb=0;nb<dom->lastActive;nb++) {
 		if (dom->ActiveBlocks[nb]!=-1) {
 			level=getlevel(dom,nb);
-			for (int i=0;i<=nx+1;i++) {
+			for (int i=0;i<=dom->ntot;i++) {
 				// Sound speed
 				cs=sqrt(Gamma*dom->prim[3][i][nb]/dom->prim[0][i][nb]);
 				if (nvar>4) {
@@ -42,33 +43,48 @@ real timestep(meshblock* dom) {
 void tstep(meshblock* dom,const real dt,const real time) {
 	real dtx;
 	int level;
-	real up[nvar][nx+2][nbmax],f[nvar][nx+2][nbmax];
+	real f[nvar][nx+2*nghosts][nbmax];
 	
 	// Obtain fluxes
 	fluxSolver(dom,f);
-	
+
+	// RK2 1st timestep	
 	for (int nb=0;nb<dom->lastActive;nb++) {
 		if (dom->ActiveBlocks[nb]!=-1) {
 			level=getlevel(dom,nb);
 			dtx=dt/dom->dx[level];
-			for (int i=1;i<=nx;i++){
+			for (int i=0;i<=dom->ntot;i++){
 				for (int ii=0;ii<nvar;ii++){
-					up[ii][i][nb]=dom->u[ii][i][nb]-dtx*(f[ii][i][nb]-f[ii][i-1][nb]);
+					dom->up[ii][i][nb]=dom->u[ii][i][nb];
+					if (i>=dom->nxmin and i<=dom->nxmax) {
+						dom->u[ii][i][nb]=dom->u[ii][i][nb]-dtx*(f[ii][i][nb]-f[ii][i-1][nb]);
+					}
 				}
 			}
 		}	
 	}
 	
 	// Boundary conditions to the U^n+1
-	setbcs(dom,up);
+	setbcs(dom,dom->u);
 	
-	// Copy up to u
+	// Find updated flux
+	update_prim(dom);
+	fluxSolver(dom,f);
+
+	// RK2 2nd timestep
 	for (int nb=0;nb<dom->lastActive;nb++) {
-		for (int i=0;i<nx+2;i++) {
-			for (int ii=0;ii<nvar;ii++) {
-				dom->u[ii][i][nb]=up[ii][i][nb];
-			}
-		}
-	}
-		
+                if (dom->ActiveBlocks[nb]!=-1) {
+                        level=getlevel(dom,nb);
+                        dtx=dt/dom->dx[level];
+                        for (int i=dom->nxmin;i<=dom->nxmax;i++){
+                                for (int ii=0;ii<nvar;ii++){
+                                        dom->u[ii][i][nb]=0.5*(dom->u[ii][i][nb]+dom->up[ii][i][nb]-dtx*(f[ii][i][nb]-f[ii][i-1][nb]));
+                                }
+                        }
+                }
+        }
+
+	// Boundary conditions to the U^n+1
+        setbcs(dom,dom->u);
+
 }

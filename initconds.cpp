@@ -8,6 +8,7 @@ void initconds(meshblock* dom,real time,real tprint,real itprint,string ictype) 
 	int level;
 	real xb;
 	real xp=0.5;
+	dom->setParams();
 
 	// Sweep all ActiveBlocks
 	for (int nb=0;nb<dom->lastActive;nb++) {
@@ -15,8 +16,8 @@ void initconds(meshblock* dom,real time,real tprint,real itprint,string ictype) 
 		if (dom->ActiveBlocks[nb]!=-1) {
 		level=getlevel(dom,nb);
 		xb=getBlockPosition(dom,nb);		
-		for (int i=0;i<=nx+1;i++) {
-			real x=xb+(i-0.5)*dom->dx[level];
+		for (int i=0;i<=dom->ntot;i++) {
+			real x=xb+(i-(0.5+nghosts/2))*dom->dx[level];
 			dom->prim[2][i][nb]=0.; // For 1D, this is usually zero.
 			if (ictype=="TC1") {
 				if (i==0 && nb==0) {
