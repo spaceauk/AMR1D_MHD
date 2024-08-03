@@ -1,5 +1,6 @@
 #include<iostream>
 #include<exception>
+#include<vector>
 #include "defs.hpp"
 
 real u2prim(const real Gamma,const int i,const real uu[nvar],string loc);
@@ -60,4 +61,23 @@ real prim2u(const real Gamma,const int i,const real pp[nvar]) {
 		uu=pp[i];
 	}
 	return uu;
+}
+
+int minloc(vector<real> V,int lenV) {
+	int loc=0;
+	real minval=abs(V[0]);
+	for (int i=1; i<lenV; i++) {
+		if (abs(V[i])<minval) {
+			minval=abs(V[i]); loc=i;
+		}
+	}
+	return loc;
+}
+
+void Roe_avg(real primL[nvar],real Hl,real primR[nvar],real Hr,real (&primRoe)[nvar],real &Hroe,real &aroe) { // Only for Hydro
+	for (int k=1;k<nvar;k++) {
+		primRoe[k]=(sqrt(primL[0])*primL[k]+sqrt(primR[0])*primR[k])/(sqrt(primL[0])+sqrt(primR[0]));
+	}
+	Hroe=(sqrt(primL[0])*Hl+sqrt(primR[0])*Hr)/(sqrt(primL[0])+sqrt(primR[0]));
+	aroe=(Gamma-1)*(Hroe-0.5*MAG2D(primRoe[1],primRoe[2]));
 }

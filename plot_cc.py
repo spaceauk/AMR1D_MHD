@@ -30,7 +30,9 @@ for i in range(3):
     plt.contourf(Jinv[:,:,0],tdomain,Jinv[:,:,1+i],levels=50)
     plt.xlabel('x')
     plt.ylabel(ylabel[i])
+    plt.colorbar()
     if i==1:
         plt.title('Contour plot of Riemann invariants (x vs t)')
+plt.tight_layout()
 plt.show()
 

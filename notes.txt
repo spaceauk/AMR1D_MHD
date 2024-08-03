@@ -2,3 +2,10 @@ slope limiter doesnt work well with Euler time step unless CFL<=0.5 is used. Is 
 
 
 Now I switch to RK2, the slope limiter can run without producing spurious oscillation at CFL=0.9 instead.
+
+Issue is not refinement for Roe & exact. Prob boundary as I get the oscillation even without refinement.
+
+
+BCs seem ok - issue shld be the refine and coarsen in mesh.cpp
+
+Muscl-Hancock scheme doesnt seem good... as v oscillatory
