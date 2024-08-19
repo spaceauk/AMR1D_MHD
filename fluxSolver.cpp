@@ -1,11 +1,14 @@
 #include<exception>
 #include "defs.hpp"
 
+// Riemann Solver (e.g., FDS)
 void prim2hllc_hydro(real (&primL)[nvar],real (&primR)[nvar],real (&ff)[nvar]);
 void prim2hll_hydro(real (&primL)[nvar],real (&primR)[nvar],real (&ff)[nvar]);
 void prim2roe_hydro(real (&primL)[nvar],real (&primR)[nvar],real (&ff)[nvar]);
 void prim2exact_hydro(real (&primL)[nvar],real (&primR)[nvar],real (&ff)[nvar]);
 void prim2RUSA_mhd(real (&primL)[nvar],real (&primR)[nvar],real (&ff)[nvar]);
+// AUSM
+void AUSMplus_up(real (&primL)[nvar],real (&primR)[nvar],real (&ff)[nvar]);
 real slopelimiter(int limiter,real r,real eta);
 
 // Computes the fluxes 
@@ -43,6 +46,8 @@ void fluxSolver(meshblock* dom,real (&f)[nvar][nx+2*nghosts][nbmax]) {
 						prim2roe_hydro(primL,primR,ff);
 					} else if (dom->RStype==3) {
 						prim2exact_hydro(primL,primR,ff);
+					} else if (dom->RStype==-1) {
+						AUSMplus_up(primL,primR,ff);
 					}
 				} else {					
 					prim2RUSA_mhd(primL,primR,ff);

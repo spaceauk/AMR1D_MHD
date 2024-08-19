@@ -13,7 +13,7 @@ using namespace std;
 // Global variables
 const bool MAG_FIELD_ENABLED=false;
 const int nvar= MAG_FIELD_ENABLED? 7 : 4; 
-const int nx=6;                                  // Use even #
+const int nx=6;                                  // Must be even #
 const int nlevs=7;                               // Base level is at 4 which mesh is initiated thus, cannot go below 4.
 const int nbmax=pow(2,nlevs-1)+1;                // Initial # of blocks used here is 8.
 const int maxiter = 500;				  
@@ -65,6 +65,7 @@ class meshblock {
 class RiemannInv: public meshblock {
 	private:
 		string RStype_hydro[4]={"HLL","HLLC","Roe","Exact-Newton"};
+		string AUSMtype_hydro[1]={"AUSM+-up"};
 	public:
 		// Include Riemann invariants for contour plot (only for Hydro)
                 int numt;
@@ -73,9 +74,11 @@ class RiemannInv: public meshblock {
                 real s[nx+2*nghosts][nbmax][ntmax]; // Entropy
 		
 		void solvertype() override {
-			RStype=3;
-			cout<<"Hydro Riemann solver ("<<RStype_hydro[RStype]
-				<<") used! Includes Riemann invariant for contour plotting."<<endl;
+			RStype=-1;
+			if (RStype>=0) {
+				cout<<"Hydro Riemann solver ("<<RStype_hydro[RStype];
+			} else {cout<<"Hydro AUSM ("<<AUSMtype_hydro[abs(RStype)-1];}
+			cout<<") used! Includes Riemann invariant for contour plotting."<<endl;
 			cout<<"-> Slope limiter used is "<<SLname[SLtype]<<endl;			
 		}
 };
